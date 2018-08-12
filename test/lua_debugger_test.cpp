@@ -6,8 +6,8 @@
 
 #include "gtest/gtest.h"
 
-using picojson::object;
 using picojson::array;
+using picojson::object;
 namespace {
 
 class DebuggerTest : public ::testing::Test {
@@ -20,7 +20,7 @@ class DebuggerTest : public ::testing::Test {
     L = luaL_newstate();
     luaL_openlibs(L);
     debugger.reset(L);
-	debugger.unpause();
+    debugger.unpause();
   }
 
   virtual void TearDown() {
@@ -39,7 +39,7 @@ void luaDofile(lua_State* L, const char* file) {
   }
   ASSERT_STREQ(0, errorstring);
 }
-}
+}  // namespace
 TEST_F(DebuggerTest, BreakPointTest1) {
   const char* TEST_LUA_SCRIPT = "../test/lua/test1.lua";
 
@@ -123,10 +123,9 @@ TEST_F(DebuggerTest, StepOverTest) {
   luaDofile(L, TEST_LUA_SCRIPT);
   std::vector<int> require_line_number = {1, 7, 2, 9};
 
-  //workaround for luajit
-  if (require_line_number.size() < break_line_numbers.size())
-  {
-	  break_line_numbers.pop_back();
+  // workaround for luajit
+  if (require_line_number.size() < break_line_numbers.size()) {
+    break_line_numbers.pop_back();
   }
 
   ASSERT_EQ(require_line_number, break_line_numbers);
@@ -145,10 +144,9 @@ TEST_F(DebuggerTest, StepInTest) {
   luaDofile(L, TEST_LUA_SCRIPT);
   std::vector<int> require_line_number = {1, 7, 2, 9, 3, 4, 5, 6, 7};
 
-  //workaround for luajit
-  if (require_line_number.size() < break_line_numbers.size())
-  {
-	  break_line_numbers.pop_back();
+  // workaround for luajit
+  if (require_line_number.size() < break_line_numbers.size()) {
+    break_line_numbers.pop_back();
   }
   ASSERT_EQ(require_line_number, break_line_numbers);
 }
@@ -213,14 +211,14 @@ TEST_F(DebuggerTest, EvalTest2) {
     ASSERT_TRUE(ret[0].is<object>());
     ASSERT_LT(0U, ret[0].get<object>().size());
 
-    std::vector<picojson::value> ret2 = debugger.current_debug_info().eval(
-        "_ENV._G", false, true, false, 1);
+    std::vector<picojson::value> ret2 =
+        debugger.current_debug_info().eval("_ENV._G", false, true, false, 1);
     ASSERT_EQ(ret, ret2);
     ASSERT_TRUE(ret[0].is<object>());
     ASSERT_LT(0U, ret[0].get<object>().size());
 
-    ret = debugger.current_debug_info().eval("_ENV['envvar']", false,
-                                             false, true, 1);
+    ret = debugger.current_debug_info().eval("_ENV['envvar']", false, false,
+                                             true, 1);
     ASSERT_EQ(1U, ret.size());
     ASSERT_TRUE(ret[0].is<double>());
     ASSERT_EQ(5456, ret[0].get<double>());
@@ -235,7 +233,6 @@ TEST_F(DebuggerTest, GetLocalTest1) {
   debugger.add_breakpoint(TEST_LUA_SCRIPT, 5);
 
   debugger.set_pause_handler([&](lrdb::debugger& debugger) {
-
     lrdb::debug_info::local_vars_type localvars =
         debugger.current_debug_info().get_local_vars();
     ASSERT_LE(2U, localvars.size());
@@ -262,7 +259,6 @@ TEST_F(DebuggerTest, GetLocalTest1) {
     eret = debugger.current_debug_info().eval("_G");
     ASSERT_EQ(1U, eret.size());
     ASSERT_TRUE(eret[0].is<picojson::object>());
-
   });
 
   luaDofile(L, TEST_LUA_SCRIPT);
@@ -273,12 +269,11 @@ TEST_F(DebuggerTest, GetVaArgTest1) {
   debugger.add_breakpoint(TEST_LUA_SCRIPT, 5);
 
   debugger.set_pause_handler([&](lrdb::debugger& debugger) {
-
     lrdb::debug_info::local_vars_type localvars =
         debugger.current_debug_info().get_local_vars(1);
 
 #if LUA_VERSION_NUM >= 502
-	ASSERT_LE(4U, localvars.size());
+    ASSERT_LE(4U, localvars.size());
 #else
     ASSERT_LE(3U, localvars.size());
 #endif
@@ -376,109 +371,108 @@ TEST_F(DebuggerTest, HitConditionBreakPointTest2) {
   ASSERT_EQ(require_line_number, break_line_numbers);
 }
 TEST_F(DebuggerTest, HitConditionBreakPointTestGreaterThenOrEqual) {
-	const char* TEST_LUA_SCRIPT = "../test/lua/loop_test.lua";
+  const char* TEST_LUA_SCRIPT = "../test/lua/loop_test.lua";
 
-	debugger.add_breakpoint(TEST_LUA_SCRIPT, 11, "", ">=7");
+  debugger.add_breakpoint(TEST_LUA_SCRIPT, 11, "", ">=7");
 
-	std::vector<int> break_line_numbers;
-	debugger.set_pause_handler([&](lrdb::debugger& debugger) {
-		break_line_numbers.push_back(debugger.current_debug_info().currentline());
-		auto* breakpoint = debugger.current_breakpoint();
-		ASSERT_TRUE(breakpoint);
-		ASSERT_EQ(TEST_LUA_SCRIPT, breakpoint->file);
-		ASSERT_EQ(11, breakpoint->line);
-		debugger.unpause();
-	});
+  std::vector<int> break_line_numbers;
+  debugger.set_pause_handler([&](lrdb::debugger& debugger) {
+    break_line_numbers.push_back(debugger.current_debug_info().currentline());
+    auto* breakpoint = debugger.current_breakpoint();
+    ASSERT_TRUE(breakpoint);
+    ASSERT_EQ(TEST_LUA_SCRIPT, breakpoint->file);
+    ASSERT_EQ(11, breakpoint->line);
+    debugger.unpause();
+  });
 
-	luaDofile(L, TEST_LUA_SCRIPT);
+  luaDofile(L, TEST_LUA_SCRIPT);
 
-	std::vector<int> require_line_number = { 11, 11, 11, 11 };
-	ASSERT_EQ(require_line_number, break_line_numbers);
+  std::vector<int> require_line_number = {11, 11, 11, 11};
+  ASSERT_EQ(require_line_number, break_line_numbers);
 }
 TEST_F(DebuggerTest, HitConditionBreakPointTestGreaterThen) {
-	const char* TEST_LUA_SCRIPT = "../test/lua/loop_test.lua";
+  const char* TEST_LUA_SCRIPT = "../test/lua/loop_test.lua";
 
-	debugger.add_breakpoint(TEST_LUA_SCRIPT, 11, "", ">7");
+  debugger.add_breakpoint(TEST_LUA_SCRIPT, 11, "", ">7");
 
-	std::vector<int> break_line_numbers;
-	debugger.set_pause_handler([&](lrdb::debugger& debugger) {
-		break_line_numbers.push_back(debugger.current_debug_info().currentline());
-		auto* breakpoint = debugger.current_breakpoint();
-		ASSERT_TRUE(breakpoint);
-		ASSERT_EQ(TEST_LUA_SCRIPT, breakpoint->file);
-		ASSERT_EQ(11, breakpoint->line);
-		debugger.unpause();
-	});
+  std::vector<int> break_line_numbers;
+  debugger.set_pause_handler([&](lrdb::debugger& debugger) {
+    break_line_numbers.push_back(debugger.current_debug_info().currentline());
+    auto* breakpoint = debugger.current_breakpoint();
+    ASSERT_TRUE(breakpoint);
+    ASSERT_EQ(TEST_LUA_SCRIPT, breakpoint->file);
+    ASSERT_EQ(11, breakpoint->line);
+    debugger.unpause();
+  });
 
-	luaDofile(L, TEST_LUA_SCRIPT);
+  luaDofile(L, TEST_LUA_SCRIPT);
 
-	std::vector<int> require_line_number = { 11, 11, 11 };
-	ASSERT_EQ(require_line_number, break_line_numbers);
+  std::vector<int> require_line_number = {11, 11, 11};
+  ASSERT_EQ(require_line_number, break_line_numbers);
 }
 TEST_F(DebuggerTest, HitConditionBreakPointTestLessThenOrEqual) {
-	const char* TEST_LUA_SCRIPT = "../test/lua/loop_test.lua";
+  const char* TEST_LUA_SCRIPT = "../test/lua/loop_test.lua";
 
-	debugger.add_breakpoint(TEST_LUA_SCRIPT, 11, "", "<=7");
+  debugger.add_breakpoint(TEST_LUA_SCRIPT, 11, "", "<=7");
 
-	std::vector<int> break_line_numbers;
-	debugger.set_pause_handler([&](lrdb::debugger& debugger) {
-		break_line_numbers.push_back(debugger.current_debug_info().currentline());
-		auto* breakpoint = debugger.current_breakpoint();
-		ASSERT_TRUE(breakpoint);
-		ASSERT_EQ(TEST_LUA_SCRIPT, breakpoint->file);
-		ASSERT_EQ(11, breakpoint->line);
-		ASSERT_GE(7, breakpoint->hit_count);
-		debugger.unpause();
-	});
+  std::vector<int> break_line_numbers;
+  debugger.set_pause_handler([&](lrdb::debugger& debugger) {
+    break_line_numbers.push_back(debugger.current_debug_info().currentline());
+    auto* breakpoint = debugger.current_breakpoint();
+    ASSERT_TRUE(breakpoint);
+    ASSERT_EQ(TEST_LUA_SCRIPT, breakpoint->file);
+    ASSERT_EQ(11, breakpoint->line);
+    ASSERT_GE(7, breakpoint->hit_count);
+    debugger.unpause();
+  });
 
-	luaDofile(L, TEST_LUA_SCRIPT);
+  luaDofile(L, TEST_LUA_SCRIPT);
 
-	std::vector<int> require_line_number = { 11,11,11,11,11, 11, 11 };
-	ASSERT_EQ(require_line_number, break_line_numbers);
+  std::vector<int> require_line_number = {11, 11, 11, 11, 11, 11, 11};
+  ASSERT_EQ(require_line_number, break_line_numbers);
 }
 TEST_F(DebuggerTest, HitConditionBreakPointTestLessThen) {
-	const char* TEST_LUA_SCRIPT = "../test/lua/loop_test.lua";
+  const char* TEST_LUA_SCRIPT = "../test/lua/loop_test.lua";
 
-	debugger.add_breakpoint(TEST_LUA_SCRIPT, 11, "", "<7");
+  debugger.add_breakpoint(TEST_LUA_SCRIPT, 11, "", "<7");
 
-	std::vector<int> break_line_numbers;
-	debugger.set_pause_handler([&](lrdb::debugger& debugger) {
-		break_line_numbers.push_back(debugger.current_debug_info().currentline());
-		auto* breakpoint = debugger.current_breakpoint();
-		ASSERT_TRUE(breakpoint);
-		ASSERT_EQ(TEST_LUA_SCRIPT, breakpoint->file);
-		ASSERT_EQ(11, breakpoint->line);
-		ASSERT_GT(7, breakpoint->hit_count);
-		debugger.unpause();
-	});
+  std::vector<int> break_line_numbers;
+  debugger.set_pause_handler([&](lrdb::debugger& debugger) {
+    break_line_numbers.push_back(debugger.current_debug_info().currentline());
+    auto* breakpoint = debugger.current_breakpoint();
+    ASSERT_TRUE(breakpoint);
+    ASSERT_EQ(TEST_LUA_SCRIPT, breakpoint->file);
+    ASSERT_EQ(11, breakpoint->line);
+    ASSERT_GT(7, breakpoint->hit_count);
+    debugger.unpause();
+  });
 
-	luaDofile(L, TEST_LUA_SCRIPT);
+  luaDofile(L, TEST_LUA_SCRIPT);
 
-	std::vector<int> require_line_number = { 11,11,11,11, 11, 11 };
-	ASSERT_EQ(require_line_number, break_line_numbers);
+  std::vector<int> require_line_number = {11, 11, 11, 11, 11, 11};
+  ASSERT_EQ(require_line_number, break_line_numbers);
 }
 TEST_F(DebuggerTest, HitConditionBreakPointTestEqual) {
-	const char* TEST_LUA_SCRIPT = "../test/lua/loop_test.lua";
+  const char* TEST_LUA_SCRIPT = "../test/lua/loop_test.lua";
 
-	debugger.add_breakpoint(TEST_LUA_SCRIPT, 11, "", "%2");
+  debugger.add_breakpoint(TEST_LUA_SCRIPT, 11, "", "%2");
 
-	std::vector<int> break_line_numbers;
-	debugger.set_pause_handler([&](lrdb::debugger& debugger) {
-		break_line_numbers.push_back(debugger.current_debug_info().currentline());
-		auto* breakpoint = debugger.current_breakpoint();
-		ASSERT_TRUE(breakpoint);
-		ASSERT_EQ(TEST_LUA_SCRIPT, breakpoint->file);
-		ASSERT_EQ(11, breakpoint->line);
-		ASSERT_EQ(1, breakpoint->hit_count % 2);
-		debugger.unpause();
-	});
+  std::vector<int> break_line_numbers;
+  debugger.set_pause_handler([&](lrdb::debugger& debugger) {
+    break_line_numbers.push_back(debugger.current_debug_info().currentline());
+    auto* breakpoint = debugger.current_breakpoint();
+    ASSERT_TRUE(breakpoint);
+    ASSERT_EQ(TEST_LUA_SCRIPT, breakpoint->file);
+    ASSERT_EQ(11, breakpoint->line);
+    ASSERT_EQ(1, breakpoint->hit_count % 2);
+    debugger.unpause();
+  });
 
-	luaDofile(L, TEST_LUA_SCRIPT);
+  luaDofile(L, TEST_LUA_SCRIPT);
 
-	std::vector<int> require_line_number = { 11,11,11, 11, 11 };
-	ASSERT_EQ(require_line_number, break_line_numbers);
+  std::vector<int> require_line_number = {11, 11, 11, 11, 11};
+  ASSERT_EQ(require_line_number, break_line_numbers);
 }
-
 
 TEST_F(DebuggerTest, RemoveBreakPointTest1) {
   const char* TEST_LUA_SCRIPT = "../test/lua/loop_test.lua";
@@ -586,6 +580,27 @@ TEST_F(DebuggerTest, GetGlobalTest) {
 
   luaDofile(L, TEST_LUA_SCRIPT);
 }
+
+TEST_F(DebuggerTest, FileMatchTest) {
+  auto break_check = [&](const std::string& path1, const std::string& path2,
+                         size_t line) {
+    bool beaked = false;
+    debugger.add_breakpoint(path2, 3);
+    debugger.clear_breakpoints();
+
+    debugger.set_pause_handler(
+        [&](lrdb::debugger& debugger) { beaked = true; });
+    luaDofile(L, path1.c_str());
+    ASSERT_TRUE(beaked);
+  };
+
+  // file path matching
+  // normal
+  break_check("../test/lua/test1.lua", "../test/lua/test1.lua", 3);
+  // Allow difference slash and backslash for windows
+  break_check("../test/lua/test1.lua", "..\\test\\lua\\test1.lua", 3);
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
