@@ -124,7 +124,7 @@ inline json::value to_json(lua_State* L, int index, int max_recursive = 1) {
 			if (key.is<picojson::object>()) {
 				sprintf(keyName, "%s: %s", keyTypename, key.get(keyTypename).to_str().c_str());
 			} else {
-				sprintf(keyName, "%s: %s", keyTypename, key.to_str());
+				sprintf(keyName, "%s: %s", keyTypename, key.to_str().c_str());
 			}
 #ifdef _MSC_VER
 #pragma warning(pop)
