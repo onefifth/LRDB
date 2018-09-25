@@ -8,6 +8,23 @@
 
 // A task runner that calls a custom npm script that compiles the extension.
 {
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"identifier": "npm",
+			"script": "watch",
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"isBackground": true,
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		}
+	]
+    /*
     "version": "0.1.0",
 
     // we want to run npm
@@ -27,4 +44,5 @@
 
     // use the standard tsc in watch mode problem matcher to find compile problems in the output.
     "problemMatcher": "$tsc-watch"
+    */
 }
