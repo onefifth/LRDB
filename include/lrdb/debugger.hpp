@@ -84,31 +84,58 @@ inline json::value to_json(lua_State* L, int index, int max_recursive = 1) {
         }
         return json::value(obj);
       }
-      int array_size = lua_rawlen(L, index);
-      if (array_size > 0) {
-        json::array a;
-        lua_pushnil(L);
-        while (lua_next(L, index) != 0) {
-          if (lua_type(L, -2) == LUA_TNUMBER) {
-            a.push_back(to_json(L, -1, max_recursive - 1));
-          }
-          lua_pop(L, 1);  // pop value
-        }
-        return json::value(a);
-      } else {
-        json::object obj;
-        lua_pushnil(L);
-        while (lua_next(L, index) != 0) {
-          if (lua_type(L, -2) == LUA_TSTRING) {
-            const char* key = lua_tostring(L, -2);
-            json::value& b = obj[key];
 
-            b = to_json(L, -1, max_recursive - 1);
-          }
-          lua_pop(L, 1);  // pop value
-        }
-        return json::value(obj);
-      }
+	  json::object t_obj;
+
+	  lua_pushnil(L);
+	  while (lua_next(L, index) != 0) {
+		int keyType = lua_type(L, -2);
+		if (keyType == LUA_TSTRING) {
+			const char* key = lua_tostring(L, -2);
+			json::value& b = t_obj[key];
+			b = to_json(L, -1, max_recursive - 1);
+		}
+		else if (keyType == LUA_TNUMBER) {
+			const double numberKey = lua_tonumber(L, -2);
+			char key[128] = {};
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4996)
+#endif
+			if (trunc(numberKey) == numberKey) {
+				sprintf(key, "%d", trunc(numberKey));
+			} else {
+				sprintf(key, "%f", numberKey);
+			}
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+			json::value& b = t_obj[key];
+			b = to_json(L, -1, max_recursive - 1);
+		}
+		else { // Getting this to work properly requires significant architecture changes
+			json::value key = to_json(L, -2, 0);
+			char keyName[128] = {};
+			const char * keyTypename = lua_typename(L, keyType);
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4996)
+#endif
+			if (key.is<picojson::object>()) {
+				sprintf(keyName, "%s: %s", keyTypename, key.get(keyTypename).to_str().c_str());
+			} else {
+				sprintf(keyName, "%s: %s", keyTypename, key.to_str());
+			}
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+			json::value& b = t_obj[keyName];
+			b = to_json(L, -1, max_recursive - 1);
+		}
+		lua_pop(L, 1);  // pop value
+	  }
+
+	  return json::value(t_obj);
     }
     case LUA_TUSERDATA: {
       if (luaL_callmeta(L, index, "__tostring")) {
